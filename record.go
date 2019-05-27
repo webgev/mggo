@@ -20,12 +20,12 @@ func (f *Field) Set(value interface{}) {
 
 // Record struct
 type Record struct {
-    Fields map[string]*Field
+    Fields map[string]Field
 }
 
 // NewRecord create and return new Record
 func NewRecord() *Record {
-    return &Record{Fields: map[string]*Field{}}
+    return &Record{Fields: map[string]Field{}}
 }
 
 // Add is added field in record
@@ -33,18 +33,20 @@ func (r *Record) Add(name string, value interface{}) error {
     if _, ok := r.Fields[name]; ok {
         return errors.New("column is exists")
     }
-    r.Fields[name] = &Field{Value: value, Name: name}
+    r.Fields[name] = Field{Value: value, Name: name}
     return nil
 }
 
 // Get is get field value
 func (r *Record) Get(name string) interface{} {
-    return r.Fields[name].Get()
+    x := r.Fields[name]
+    return x.Get()
 }
 
 // Set is set field value
 func (r *Record) Set(name string, value interface{}) {
-    r.Fields[name].Set(value)
+    x := r.Fields[name]
+    x.Set(value)
 }
 
 // Has is check has field

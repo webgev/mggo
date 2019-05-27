@@ -18,7 +18,7 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 
 // SQLOpen - connect sql
 func SQLOpen() {
-    cs := config.Section("sql")
+    cs := config.Section("database")
     db = pg.Connect(&pg.Options{
         User:     cs.Key("user").String(),
         Password: cs.Key("password").String(),
