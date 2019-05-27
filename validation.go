@@ -15,7 +15,7 @@ type validationType string
 //  ValidationSmsType sms validation
 const (
     ValidationEmailType validationType = "email"
-    ValidationSmsType   validationType = "email"
+    ValidationSmsType   validationType = "sms"
 )
 
 // Validation struct

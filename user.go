@@ -12,14 +12,6 @@ const (
     salt       = "abcdefghijklmnopqrstuvwxyz"
 )
 
-func init() {
-    InitCallback(func() {
-        models := []interface{}{(*User)(nil), (*userPassword)(nil)}
-        CreateTable(models)
-    })
-
-}
-
 // User is user struct
 type User struct {
     ID    int    `sql:",pk"`
@@ -27,7 +19,7 @@ type User struct {
     Login string `sql:",unique"`
     Right int    `sql:"default:4"`
 }
-type userPassword struct {
+type UserPassword struct {
     UserID   int
     Password string
 }
@@ -81,7 +73,7 @@ func (u User) Update() int {
 // SetPassword is set password in user
 func (u User) SetPassword(id int, password string) bool {
     if id != 0 && password != "" {
-        up := userPassword{id, GenerateFromPassword(password)}
+        up := UserPassword{id, GenerateFromPassword(password)}
         SQL().Insert(&up)
         return true
     }

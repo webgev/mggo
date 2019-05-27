@@ -9,9 +9,22 @@ var redicClient *redis.Client
 
 func init() {
     InitCallback(func () {
+        section, err := config.GetSection("redis")
+        if err != nil {
+            return
+        }
+        v, err := section.GetKey("address")
+        if err != nil {
+            return
+        }
+        var password string
+        pass, err := section.GetKey("password")
+        if err == nil {
+            password = pass.String()
+        }
         redicClient = redis.NewClient(&redis.Options{
-            Addr:     "localhost:6379",
-            Password: "", 
+            Addr:     v.String(),
+            Password: password, 
             DB:       0,  
         })
     
@@ -20,11 +33,7 @@ func init() {
     })
 }
 
-func Redis() *redis.StatusCmd{
-    redicClient = redis.NewClient(&redis.Options{
-        Addr:     "localhost:6379",
-        Password: "", 
-        DB:       0,  
-    })
-    return redicClient.Ping()
+//Redis get redis client
+func Redis() *redis.Client{
+    return redicClient
 }
