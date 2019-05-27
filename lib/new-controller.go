@@ -1,0 +1,199 @@
+// Create name controller 
+
+package main
+
+import (
+    "flag"
+    "strings"
+    "fmt"
+    "os"
+    "path/filepath"
+)
+
+const (
+    controllerStr = `package controller
+
+import (
+    "github.com/webgev/mggo"
+    "strconv"
+)
+func init() {
+    mggo.AppendRight("$NAME.Read", mggo.RRightGuest)
+    mggo.AppendRight("$NAME.List", mggo.RRightGuest)
+    mggo.AppendRight("$NAME.Update", mggo.RRightEditor)
+    mggo.AppendRight("$NAME.Delete", mggo.RRightEditor)
+
+    mggo.AppendViewRight("$NAME.Update", mggo.RRightEditor)
+    mggo.InitCallaback(func () {
+        mggo.CreateTable( []interface{}{ (*$NAME)(nil) } )
+    })
+}
+
+type $NAME struct {
+    ID int
+    Name string
+    View $NAMEView ` + "`sql:\"-\" structtomap:\"-\"`" + `
+    mggo.ListFilter ` +"`sql:\"-\" structtomap:\"-\" mapstructure:\",squash\"`" +`
+}
+
+func(c $NAME) Read() $NAME {
+    mggo.SQL().Select(&c)
+    return c
+}
+
+func (c *$NAME) List() ($NAMELOWERs []$NAME) {
+    query := mggo.SQL().Model(&$NAMELOWERs)
+    for key, value := range c.Filter {
+        switch key {
+        case "Name":
+            query.Where("name = ?", value)
+        }
+    }
+    c.ListFilter.Paging(query).Select()
+    return
+}
+func (c $NAME) Update() int {
+    if c.ID == 0 {
+        mggo.SQL().Insert(&c)
+    } else {
+        mggo.SQL().Update(&c)
+    }
+    return c.ID
+}
+func (c $NAME) Delete() {
+    if c.ID != 0 {
+        mggo.SQL().Delete(&c)
+    }
+}
+
+type $NAMEView struct{}
+
+func(v $NAMEView) Index(data *mggo.ViewData, path []string){
+    data.View = "$NAMELOWER/$NAMELOWER.html"
+    data.Data["Title"] = "$NAME"
+    c := $NAME{}
+    data.Data["$NAMEs"] = c.List()
+}
+func(v $NAMEView) Read(data *mggo.ViewData, path []string){
+    if len(path) > 2 {
+        if i, err := strconv.Atoi(path[2]); err == nil {
+            data.View = "$NAMELOWER/read.html"
+            c := $NAME{ID: i}
+            r := c.Read()
+            if r.ID > 0 {
+                data.Data["Title"] = r.Name
+                data.Data["$NAME"] = r
+                return
+            }
+        } 
+    }
+    panic(mggo.ErrorViewNotFound{})
+}
+func(v $NAMEView) Update(data *mggo.ViewData, path []string){
+    data.View = "news/Update.html"
+    if len(path) > 2 {
+        if i, err := strconv.Atoi(path[2]); err == nil {
+            data.View = "$NAMELOWER/Update.html"
+            c := $NAME{ID: i,}
+            r := c.Read()
+            if r.ID == 0 {
+                panic(mggo.ErrorViewNotFound{})
+            }
+            data.Data["Title"] = r.Name
+            data.Data["$NAME"] = r	
+        } else {
+            panic(mggo.ErrorViewNotFound{})
+        }
+    } else {
+        data.Data["Title"] = "Ceate $NAME" 
+        data.Data["$NAME"] = $NAME{}
+    }
+}
+`
+    viewListStr = `{{define "content"}}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .$NAMEs}}
+        <tr>
+            <td>{{.ID}}</td>
+            <td>{{.Name}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}
+`
+    viewReadStr = `{{define "content"}}
+<div>
+    <p>ID <strong>{{.$NAME.ID}} </strong> </h2>
+    <p>Name <strong>{{.$NAME.Name}} </strong> </h2>
+</div>
+{{end}}
+`
+    viewUpdateStr = `{{define "content"}}
+<div id="$NAME-update">
+    <input type="text" data-bind="value: Name" placeholder="Name" />
+    <input type="submit" title="Go" data-bind="click: clickHandler"/>  
+</div>
+<script>
+    function $NAMEUpdate() {
+        var self = this;
+        this.Name = ko.observable({{.$NAME.Name}});
+        this.ID = ko.observable({{.$NAME.ID}});
+        this.clickHandler = function() {
+            api("$NAME.Update", ko.toJS(self)).then(res=> {alert("ok")});
+        }
+    };
+    var model = new $NAMEUpdate();
+    ko.applyBindings(model, document.getElementById("$NAME-update"));
+</script>
+{{end}}
+`
+)
+
+func main() {
+    name := flag.String("name", "", "controller name")
+    //isSql := flag.Bool("sql", true, "is sql")
+    isView := flag.Bool("view", true, "is view")
+    flag.Parse()
+
+    if *name != "" {
+        cName := strings.Title(*name)
+        cNameLower := strings.ToLower(*name)
+        text := strings.ReplaceAll(controllerStr, "$NAMELOWER", cNameLower)
+        text = strings.ReplaceAll(text, "$NAME", cName)
+        file, err := os.Create("./controller/" + cNameLower + ".go")
+        if err != nil{
+            fmt.Println("Unable to create file:", err) 
+            os.Exit(1) 
+        }
+        defer file.Close() 
+        file.WriteString(text)
+        
+        if *isView {
+            newpath := filepath.Join(".", "view", cNameLower)
+            os.MkdirAll(newpath, os.ModePerm)
+            filevList, err := os.Create(newpath + "/" + cNameLower + ".html")
+            filevRead, err2 := os.Create(newpath + "/read.html")
+            filevUpdate, err3 := os.Create(newpath + "/update.html")
+            if err != nil || err2 != nil || err3 != nil{
+                fmt.Println("Unable to create file:", err) 
+                os.Exit(1) 
+            }
+            defer filevList.Close()
+            defer filevRead.Close()
+            defer filevUpdate.Close()
+            filevList.WriteString(strings.ReplaceAll(viewListStr, "$NAME", cName))
+            filevRead.WriteString(strings.ReplaceAll(viewReadStr, "$NAME", cName))
+            filevUpdate.WriteString(strings.ReplaceAll(viewUpdateStr, "$NAME", cName))
+        }
+        
+        fmt.Println("Done.")
+    }
+}
