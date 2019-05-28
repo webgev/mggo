@@ -2,22 +2,30 @@ package mggo
 
 import (
     "net"
-    "net/http"
     "net/rpc"
+    "net/rpc/jsonrpc"
     "reflect"
     "strings"
     "encoding/json"
 )
 
-func runRpc(address string) {
-    arith := new(RPCInvoke)
-    rpc.Register(arith)
-    rpc.HandleHTTP()
-    l, e := net.Listen("tcp", address)
+func runRPC(address string) {
+    cal := new(RPCInvoke)
+    server := rpc.NewServer()
+    server.Register(cal)
+    server.HandleHTTP(rpc.DefaultRPCPath, rpc.DefaultDebugPath)
+    listener, e := net.Listen("tcp", address)
     if e != nil {
         panic(e)
     }
-    go http.Serve(l, nil)
+    for {
+        if conn, err := listener.Accept(); err != nil {
+            panic(err)
+        } else {
+            LogInfo("new connection established\n")
+            go server.ServeCodec(jsonrpc.NewServerCodec(conn))
+        }
+    }
 }
 
 // RPCArgs is arguments for rpc invoke
@@ -48,6 +56,7 @@ func (r *RPCInvoke) Invoke(args *RPCArgs, reply *[]byte) error {
         panic(ErrorMethodNotFound{})
     }
     LogInfo("Call rpc method", "->", methods)
+    LogInfo("Cookie", GetCookie("sid"))
     res := method.Call(nil)
     LogInfo("End call rpc method", "->", methods)
     if len(res) > 0 {
@@ -75,16 +84,16 @@ func (r *RPC) Invoke(method string, params *Record) (interface{}, error) {
     if err != nil {
         return nil, err
     }
-    client, err := rpc.DialHTTP("tcp", host.String())
+    client, err := net.Dial("tcp", host.String())
+    defer client.Close()
     if err != nil {
         return nil, err
     }
-
+    c := jsonrpc.NewClient(client)
     q, _ := json.Marshal(*params)
     args := &RPCArgs{Method: r.object + "." + method, Params: q}
     reply := []byte{}
-    err = client.Call("RPCInvoke.Invoke", args, &reply)
-    defer client.Close()
+    err = c.Call("RPCInvoke.Invoke", args, &reply)
     rec := NewRecord()
     json.Unmarshal(reply, &rec)
     if err != nil {
