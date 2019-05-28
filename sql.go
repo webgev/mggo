@@ -18,6 +18,9 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 
 // SQLOpen - connect sql
 func SQLOpen() {
+    if db != nil {
+        return
+    }
     cs := config.Section("database")
     db = pg.Connect(&pg.Options{
         User:     cs.Key("user").String(),
@@ -25,11 +28,17 @@ func SQLOpen() {
         Database: cs.Key("database").String(),
     })
     db.AddQueryHook(dbLogger{})
+    LogInfo("Connect Database")
 }
 
 // SQLClose - disconnect sql
 func SQLClose() {
+    if db == nil {
+        return
+    }
     db.Close()
+    db = nil
+    LogInfo("Disconnect Database")
 }
 
 // SQL is open sql and return pg.DB

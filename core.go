@@ -43,12 +43,13 @@ func Run(rout Router, cfg *ini.File) {
     if initFlag {
         panic("init")
     }
-    defer SQLClose()
     initFlag = true
     config = cfg
+    
     SQLOpen()
     for _, handler := range callbacks {
         handler()
     }
+    SQLClose()
     rout.run()
 }

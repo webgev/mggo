@@ -68,7 +68,7 @@ func (r *Router) run() {
             http.HandleFunc(path, handler)
         }
     }
-    rpcServe(serverConfig.Key("rpc_address").String())
+    runRpc(serverConfig.Key("rpc_address").String())
     err = http.ListenAndServe(host.String(), nil)
     if err != nil {
         panic(err)
