@@ -8,8 +8,6 @@ import (
     "net/http"
     "reflect"
     "strings"
-    "os"
-	"path/filepath"
 )
 
 var customHandles map[string]func(http.ResponseWriter, *http.Request)
@@ -35,10 +33,7 @@ type Router struct {
 }
 
 // run http
-func (r *Router) run() {
-    ex, _ := os.Executable()
-    dir := filepath.Dir(ex)
-    
+func (r *Router) run() { 
     r.defaultParams()
     getController = r.GetController
     r.ViewData.Data["tempalteParser"] = tempalteParser{r.ViewData}
@@ -62,7 +57,7 @@ func (r *Router) run() {
         })
     }
     if static, err := serverConfig.GetKey("static_address"); err == nil {
-        http.Handle(static.String(), http.StripPrefix(static.String(), http.FileServer(http.Dir(dir + static.String()))))
+        http.Handle(static.String(), http.StripPrefix(static.String(), http.FileServer(http.Dir("." + static.String()))))
     }
     if customHandles != nil {
         for path, handler := range customHandles {
