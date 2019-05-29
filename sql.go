@@ -26,6 +26,8 @@ func SQLOpen() {
         User:     cs.Key("user").String(),
         Password: cs.Key("password").String(),
         Database: cs.Key("database").String(),
+        Addr:     cs.Key("address").String(),
+        Network:     cs.Key("network").String(),
     })
     db.AddQueryHook(dbLogger{})
     LogInfo("Connect Database")

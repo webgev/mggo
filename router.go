@@ -8,6 +8,8 @@ import (
     "net/http"
     "reflect"
     "strings"
+    "os"
+	"path/filepath"
 )
 
 var customHandles map[string]func(http.ResponseWriter, *http.Request)
@@ -23,10 +25,6 @@ var getController func(string) interface{}
 
 // Router web app
 // - Host default localhost:9000
-// - URLApi path in api method. Default "/api/"
-// - URLView path in view. Default "/"
-// - URLSocket path in socket. Default "/echo"
-// - DirStatic directory static. Default "static"
 // - ViewData template view
 // - Menu menu for template["Menu"]
 // - GetController function get controller by controller name
@@ -38,6 +36,9 @@ type Router struct {
 
 // run http
 func (r *Router) run() {
+    ex, _ := os.Executable()
+    dir := filepath.Dir(ex)
+    
     r.defaultParams()
     getController = r.GetController
     r.ViewData.Data["tempalteParser"] = tempalteParser{r.ViewData}
@@ -61,7 +62,7 @@ func (r *Router) run() {
         })
     }
     if static, err := serverConfig.GetKey("static_address"); err == nil {
-        http.Handle(static.String(), http.StripPrefix(static.String(), http.FileServer(http.Dir("."+static.String()))))
+        http.Handle(static.String(), http.StripPrefix(static.String(), http.FileServer(http.Dir(dir + static.String()))))
     }
     if customHandles != nil {
         for path, handler := range customHandles {

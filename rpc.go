@@ -1,12 +1,12 @@
 package mggo
 
 import (
+    "encoding/json"
     "net"
     "net/rpc"
     "net/rpc/jsonrpc"
     "reflect"
     "strings"
-    "encoding/json"
 )
 
 func runRPC(address string) {
@@ -40,7 +40,7 @@ type RPCInvoke int
 // Invoke is invoke method
 func (r *RPCInvoke) Invoke(args *RPCArgs, reply *[]byte) error {
     SQLOpen()
-    defer func () {
+    defer func() {
         SQLClose()
         handlerError(ViewData{}, recover())
     }()
@@ -70,7 +70,7 @@ func (r *RPCInvoke) Invoke(args *RPCArgs, reply *[]byte) error {
 
 // RPC struct
 type RPC struct {
-    object string
+    object  string
     service string
 }
 
@@ -105,7 +105,7 @@ func (r *RPC) Invoke(method string, params *Record) (interface{}, error) {
 // NewRPC is new RPC
 func NewRPC(object, service string) *RPC {
     r := &RPC{
-        object: object,
+        object:  object,
         service: service,
     }
     return r
