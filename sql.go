@@ -3,6 +3,7 @@ package mggo
 import (
     "github.com/go-pg/pg"
     "github.com/go-pg/pg/orm"
+    "context"
 )
 
 var db *pg.DB
@@ -11,7 +12,7 @@ type dbLogger struct{}
 
 func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {}
 
-func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
+func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) {
     s, _ := q.FormattedQuery()
     LogInfo("Вызов sql:\n", s)
 }
