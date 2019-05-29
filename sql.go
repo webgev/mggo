@@ -12,9 +12,10 @@ type dbLogger struct{}
 
 func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {}
 
-func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) {
+func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) (context.Context, error) {
     s, _ := q.FormattedQuery()
     LogInfo("Вызов sql:\n", s)
+    return c, nil
 }
 
 // SQLOpen - connect sql
