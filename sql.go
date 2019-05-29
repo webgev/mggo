@@ -10,7 +10,9 @@ var db *pg.DB
 
 type dbLogger struct{}
 
-func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {}
+func (d dbLogger) BeforeQuery(c context.Context, q *pg.QueryEvent) (context.Context, error){
+    return c, nil
+}
 
 func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) (context.Context, error) {
     s, _ := q.FormattedQuery()
