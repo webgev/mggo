@@ -11,36 +11,36 @@ type eventType int
 // EventTypeServer is publish event only server
 // EventTypeGlobal is publish event server and client
 const (
-    EventTypeClient eventType = iota + 1
-    EventTypeServer
-    EventTypeGlobal
+	EventTypeClient eventType = iota + 1
+	EventTypeServer
+	EventTypeGlobal
 )
 
 func init() {
-    events = map[string][]eventHadler{}
+	events = map[string][]eventHadler{}
 }
 
 // EventSubscribe is subscribe event by event name
 func EventSubscribe(eventName string, handler eventHadler) {
-    if v, ok := events[eventName]; ok {
-        v = append(v, handler)
-    } else {
-        events[eventName] = []eventHadler{handler}
-    }
+	if v, ok := events[eventName]; ok {
+		v = append(v, handler)
+	} else {
+		events[eventName] = []eventHadler{handler}
+	}
 }
 
 // EventPublish is publick
 func EventPublish(eventName string, et eventType, users []int, params ...interface{}) {
-    // send server
-    if v, ok := events[eventName]; ok {
-        for _, handler := range v {
-            if et > EventTypeClient {
-                handler(params)
-            }
-        }
-    }
-    // send server
-    if et != EventTypeServer {
-        sendSockets(eventName, users, params)
-    }
+	// send server
+	if v, ok := events[eventName]; ok {
+		for _, handler := range v {
+			if et > EventTypeClient {
+				handler(params)
+			}
+		}
+	}
+	// send client
+	if et != EventTypeServer {
+		sendSockets(eventName, users, params)
+	}
 }
