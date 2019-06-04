@@ -58,7 +58,7 @@ func (u *User) GetCurrentUserInfo() User {
 
 // Read is read user by user id
 func (u *User) Read() User {
-	SQL().Select(&u)
+	SQL().Select(u)
 	return *u
 }
 
