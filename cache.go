@@ -6,16 +6,18 @@ import (
 	"time"
 )
 
-type methodCache struct {
-	cacheType  CacheType
+type cacheMethod struct {
+	cacheType
 	expiration int
 }
 
-type CacheType int
+type cacheType int
 
+//CacheTypeUser is cache by user
+//CacheTypeMethodParams is cache by method params
 const (
-	CacheTypeUser CacheType = iota
-	CacheTypeParams
+	CacheTypeUser cacheType = iota
+	CacheTypeMethodParams
 )
 const (
 	cacheUserPrefix   = "-userid-"
@@ -36,23 +38,23 @@ type cache struct {
 	sync.RWMutex
 	items        map[string]itemCache
 	start        bool
-	methodCaches map[string]methodCache
+	cacheMethods map[string]cacheMethod
 }
 
 func init() {
 	Cache = cache{
 		items:        map[string]itemCache{},
-		methodCaches: map[string]methodCache{},
+		cacheMethods: map[string]cacheMethod{},
 	}
 }
 
 // AddMethod is wil add method in cache
-func (c *cache) AddMethod(method string, cacheType CacheType, expiration int) {
-	c.methodCaches[method] = methodCache{cacheType, expiration}
+func (c *cache) AddMethod(method string, cType cacheType, expiration int) {
+	c.cacheMethods[method] = cacheMethod{cType, expiration}
 }
 
 // ClearMethodCache is clear method cache
-func (c *cache) ClearMethodCache(method string) {
+func (c *cache) ClearCacheMethod(method string) {
 	keys := []string{}
 	for _, v := range c.items {
 		if v.method == method {
@@ -65,7 +67,7 @@ func (c *cache) ClearMethodCache(method string) {
 }
 
 // ClearMethodCacheByUserID is clear method cache by user
-func (c *cache) ClearMethodCacheByUserID(method string, id int) {
+func (c *cache) ClearCacheMethodByUserID(method string, id int) {
 	keys := []string{}
 	for _, v := range c.items {
 		key := method + cacheUserPrefix + string(id)
@@ -102,9 +104,9 @@ func (c *cache) delete(key string) {
 }
 
 func (c *cache) getMethod(method string, params interface{}) (interface{}, bool) {
-	if v, ok := c.methodCaches[method]; ok {
+	if v, ok := c.cacheMethods[method]; ok {
 		var key string
-		if v.cacheType == CacheTypeParams {
+		if v.cacheType == CacheTypeMethodParams {
 			key = method + cacheParamsPrefix + fmt.Sprintf("%v", params)
 		} else if v.cacheType == CacheTypeUser {
 			id := SAP{}.SessionUserID()
@@ -119,9 +121,9 @@ func (c *cache) getMethod(method string, params interface{}) (interface{}, bool)
 }
 
 func (c *cache) setMethod(method string, value interface{}, params interface{}) bool {
-	if v, ok := c.methodCaches[method]; ok {
+	if v, ok := c.cacheMethods[method]; ok {
 		var key string
-		if v.cacheType == CacheTypeParams {
+		if v.cacheType == CacheTypeMethodParams {
 			key = method + cacheParamsPrefix + fmt.Sprintf("%v", params)
 		} else if v.cacheType == CacheTypeUser {
 			id := SAP{}.SessionUserID()
@@ -136,7 +138,7 @@ func (c *cache) setMethod(method string, value interface{}, params interface{}) 
 }
 
 func (c *cache) isset(method string) bool {
-	_, ok := c.methodCaches[method]
+	_, ok := c.cacheMethods[method]
 	return ok
 }
 
