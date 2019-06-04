@@ -13,7 +13,8 @@ type SAP struct{}
 // Authenticate by login and password
 func (s SAP) Authenticate(login, password string) bool {
 	if login != "" && password != "" {
-		id := User{}.Identity(login, password)
+		user := User{}
+		id := user.Identity(login, password)
 		if id == 0 {
 			return false
 		}

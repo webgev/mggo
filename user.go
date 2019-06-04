@@ -27,7 +27,7 @@ type UserPassword struct {
 }
 
 // Identity is get user id by login and password
-func (u User) Identity(login, password string) int {
+func (u *User) Identity(login, password string) int {
 	var id int
 
 	SQL().QueryOne(Scan(&id), `
@@ -39,41 +39,41 @@ func (u User) Identity(login, password string) int {
 }
 
 // GetCurrentUserInfo is get current user info from session
-func (u User) GetCurrentUserInfo() User {
+func (u *User) GetCurrentUserInfo() User {
 	id := SAP{}.SessionUserID()
 	if id == 0 {
 		return User{}
 	}
-	cache := string(id) + "-userInfo"
-	if value, ok := Cache.Get(cache); ok {
+	cache := "User.GetCurrentUserInfo" + cacheUserPrefix + string(id)
+	if value, ok := Cache.get(cache); ok {
 		return value.(User)
 	}
+
 	u.ID = id
 	res := u.Read()
 	//1 day
-	Cache.Set(cache, res, 60*60*24)
+	Cache.set("User.GetCurrentUserInfo", cache, res, 60*60*24)
 	return res
 }
 
 // Read is read user by user id
-func (u User) Read() User {
+func (u *User) Read() User {
 	SQL().Select(&u)
-	return u
+	return *u
 }
 
 // Update is insert or update user
-func (u User) Update() int {
+func (u *User) Update() int {
 	if u.ID == 0 {
 		SQL().Insert(&u)
 	} else {
 		SQL().Update(&u)
-		Cache.Delete(string(u.ID) + "-userInfo")
 	}
 	return u.ID
 }
 
 // SetPassword is set password in user
-func (u User) SetPassword(id int, password string) bool {
+func (u *User) SetPassword(id int, password string) bool {
 	if id != 0 && password != "" {
 		up := UserPassword{id, GenerateFromPassword(password)}
 		SQL().Insert(&up)

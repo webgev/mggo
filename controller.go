@@ -11,6 +11,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+type Controller interface{}
+
 // ListFilter is struct for controller list method
 type ListFilter struct {
 	Filter MapStringAny `sql:"-" structtomap:"-" mapstructure:"filter"`
@@ -142,25 +144,47 @@ func GetAPIResult(params interface{}) interface{} {
 }
 
 // Invoke controller method
-func Invoke(controller interface{}, methodName string, params ...interface{}) interface{} {
+func Invoke(controller Controller, methodName string) (result interface{}) {
 	c := reflect.ValueOf(controller)
-	inputs := []reflect.Value{}
-	for i := 0; i < len(params); i++ {
-		inputs[i] = reflect.ValueOf(params[i])
+	m := c
+	if c.Type().Kind() == reflect.Ptr {
+		m = reflect.Indirect(c)
 	}
+	name := m.Type().Name()
+	objects := name + "." + methodName
+	issetCache := Cache.isset(objects)
+
+	LogInfo("Вызов метода ", objects)
+
+	if issetCache {
+		if v, ok := Cache.getMethod(objects, controller); ok {
+			LogInfo("Cache get")
+			LogInfo("Конец метода ", objects)
+			return v
+		}
+	}
+
 	method := c.MethodByName(methodName)
-	res := method.Call(inputs)
-	if len(res) > 0 {
-		return res[0].Interface()
+	if !method.IsValid() {
+		panic(ErrorMethodNotFound{})
 	}
-	return nil
+	res := method.Call(nil)
+	if len(res) > 0 {
+		result = res[0].Interface()
+	}
+	if issetCache {
+		LogInfo("Cache set")
+		Cache.setMethod(objects, result, controller)
+	}
+	LogInfo("Конец метода ", objects)
+	return
 }
 
 // AsyncInvoke is async invoke controller method.
-func AsyncInvoke(controller interface{}, methodName string, params ...interface{}) chan interface{} {
+func AsyncInvoke(controller Controller, methodName string) chan interface{} {
 	var x chan interface{}
 	go func() {
-		x <- Invoke(controller, methodName, params)
+		x <- Invoke(controller, methodName)
 	}()
 	return x
 }

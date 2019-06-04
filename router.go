@@ -22,6 +22,7 @@ type resultMethod struct {
 
 var getController func(string) interface{}
 
+// RouterHooks is hooks api and view request
 type RouterHooks interface {
 	Before(*Router, http.ResponseWriter, *http.Request)
 	After(*Router, http.ResponseWriter, *http.Request)
@@ -115,17 +116,12 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	}
 
 	MapToStruct(rec.Params, contr)
-	contrValue := reflect.ValueOf(contr)
-
-	method := contrValue.MethodByName(methods[1])
-	if !method.IsValid() {
-		panic(ErrorMethodNotFound{})
-	}
+	res := Invoke(contr, methods[1])
 	var result interface{}
-	res := method.Call(nil)
+
 	LogInfo("Конец API метода:", rec.Method)
-	if len(res) > 0 {
-		result = GetAPIResult(res[0].Interface())
+	if res != nil {
+		result = GetAPIResult(res)
 	}
 	r.hooksBefore(w, req)
 	json.NewEncoder(w).Encode(resultMethod{Result: result})
