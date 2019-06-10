@@ -145,7 +145,7 @@ func GetAPIResult(params interface{}) interface{} {
 }
 
 // Invoke controller method
-func Invoke(controller Controller, methodName string) (result interface{}) {
+func Invoke(ctx *BaseContext, controller Controller, methodName string) (result interface{}) {
 	c := reflect.ValueOf(controller)
 	m := c
 	if c.Type().Kind() == reflect.Ptr {
@@ -158,7 +158,7 @@ func Invoke(controller Controller, methodName string) (result interface{}) {
 	LogInfo("Вызов метода ", objects)
 
 	if issetCache {
-		if v, ok := Cache.getMethod(objects, controller); ok {
+		if v, ok := Cache.getMethod(ctx, objects, controller); ok {
 			LogInfo("Cache get")
 			LogInfo("Конец метода ", objects)
 			return v
@@ -169,23 +169,17 @@ func Invoke(controller Controller, methodName string) (result interface{}) {
 	if !method.IsValid() {
 		panic(ErrorMethodNotFound{})
 	}
-	res := method.Call(nil)
+	inputs := []reflect.Value{
+		reflect.ValueOf(ctx),
+	}
+	res := method.Call(inputs)
 	if len(res) > 0 {
 		result = res[0].Interface()
 	}
 	if issetCache {
 		LogInfo("Cache set")
-		Cache.setMethod(objects, result, controller)
+		Cache.setMethod(ctx, objects, result, controller)
 	}
 	LogInfo("Конец метода ", objects)
 	return
-}
-
-// AsyncInvoke is async invoke controller method.
-func AsyncInvoke(controller Controller, methodName string) chan interface{} {
-	var x chan interface{}
-	go func() {
-		x <- Invoke(controller, methodName)
-	}()
-	return x
 }

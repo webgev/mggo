@@ -11,7 +11,7 @@ import (
 type SAP struct{}
 
 // Authenticate by login and password
-func (s SAP) Authenticate(login, password string) bool {
+func (s SAP) Authenticate(ctx *BaseContext, login, password string) bool {
 	if login != "" && password != "" {
 		user := User{}
 		id := user.Identity(login, password)
@@ -21,7 +21,7 @@ func (s SAP) Authenticate(login, password string) bool {
 		expiration := time.Now().Add(365 * 24 * time.Hour)
 		sid := GenerateSid(id)
 		cookie1 := &http.Cookie{Name: "sid", Value: sid, HttpOnly: true, Expires: expiration, Path: "/"}
-		SetCookie(cookie1)
+		SetCookie(ctx, cookie1)
 		session := SessionStorage{Sid: sid}
 		session.Set()
 		EventPublish("SAP.Auth", EventTypeServer, nil, id)
@@ -31,23 +31,23 @@ func (s SAP) Authenticate(login, password string) bool {
 }
 
 // IsAuth is check user authenticate
-func (s SAP) IsAuth() bool {
-	return GetCookie("sid") != ""
+func (s SAP) IsAuth(ctx *BaseContext) bool {
+	return GetCookie(ctx, "sid") != ""
 }
 
 // Exit is exit
-func (s SAP) Exit() {
+func (s SAP) Exit(ctx *BaseContext) {
 	expiration := time.Now().Add(-300)
-	sid := GetCookie("sid")
+	sid := GetCookie(ctx, "sid")
 	cookie1 := &http.Cookie{Name: "sid", Value: sid, HttpOnly: true, Expires: expiration, Path: "/"}
-	SetCookie(cookie1)
+	SetCookie(ctx, cookie1)
 	session := SessionStorage{Sid: sid}
 	session.Delete()
 }
 
 // SessionUserID - get userid for cookie sid
-func (s SAP) SessionUserID() int {
-	sid := GetCookie("sid")
+func (s SAP) SessionUserID(ctx *BaseContext) int {
+	sid := GetCookie(ctx, "sid")
 	if sid == "" {
 		return 0
 	}
@@ -57,6 +57,6 @@ func (s SAP) SessionUserID() int {
 }
 
 // SessionID - get userid for cookie sid
-func (s SAP) SessionID() string {
-	return GetCookie("sid")
+func (s SAP) SessionID(ctx *BaseContext) string {
+	return GetCookie(ctx, "sid")
 }

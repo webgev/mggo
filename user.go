@@ -39,8 +39,8 @@ func (u *User) Identity(login, password string) int {
 }
 
 // GetCurrentUserInfo is get current user info from session
-func (u *User) GetCurrentUserInfo() User {
-	id := SAP{}.SessionUserID()
+func (u *User) GetCurrentUserInfo(ctx *BaseContext) User {
+	id := SAP{}.SessionUserID(ctx)
 	if id == 0 {
 		return User{}
 	}
@@ -50,20 +50,20 @@ func (u *User) GetCurrentUserInfo() User {
 	}
 
 	u.ID = id
-	res := u.Read()
+	res := u.Read(ctx)
 	//1 day
 	Cache.set("User.GetCurrentUserInfo", cache, res, 60*60*24)
 	return res
 }
 
 // Read is read user by user id
-func (u *User) Read() User {
+func (u *User) Read(ctx *BaseContext) User {
 	SQL().Select(u)
 	return *u
 }
 
 // Update is insert or update user
-func (u *User) Update() int {
+func (u *User) Update(ctx *BaseContext) int {
 	if u.ID == 0 {
 		SQL().Insert(&u)
 	} else {

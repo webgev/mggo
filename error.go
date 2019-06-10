@@ -42,31 +42,31 @@ type errorMethod struct {
 	Error interface{}
 }
 
-func handlerError(temp ViewData, r interface{}) {
+func handlerError(ctx *BaseContext, temp ViewData, r interface{}) {
 	if r != nil {
 		var printLog bool
 		var message = r
 		switch e := r.(type) {
 		case ErrorViewNotFound:
-			respose.WriteHeader(http.StatusNotFound)
+			ctx.Response.WriteHeader(http.StatusNotFound)
 			t, _ := template.ParseFiles(temp.DirView+temp.Template, temp.DirView+"404.html")
-			t.Execute(respose, temp.Data)
+			t.Execute(ctx.Response, temp.Data)
 			return
 		case ErrorMethodNotFound:
-			respose.WriteHeader(http.StatusNotFound)
+			ctx.Response.WriteHeader(http.StatusNotFound)
 			message = e.Error()
 		case ErrorStatusForbidden:
-			respose.WriteHeader(http.StatusForbidden)
+			ctx.Response.WriteHeader(http.StatusForbidden)
 			message = e.Error()
 		case ErrorAuthenticate:
-			respose.WriteHeader(http.StatusUnauthorized)
+			ctx.Response.WriteHeader(http.StatusUnauthorized)
 			message = e.Error()
 		case ErrorInternalServer:
-			respose.WriteHeader(http.StatusInternalServerError)
+			ctx.Response.WriteHeader(http.StatusInternalServerError)
 			message = e.Error()
 			printLog = true
 		default:
-			respose.WriteHeader(http.StatusInternalServerError)
+			ctx.Response.WriteHeader(http.StatusInternalServerError)
 			printLog = true
 		}
 
@@ -74,7 +74,7 @@ func handlerError(temp ViewData, r interface{}) {
 		buf2 = buf2[:runtime.Stack(buf2, false)]
 		err := errorMethod{Error: message}
 
-		json.NewEncoder(respose).Encode(err)
+		json.NewEncoder(ctx.Response).Encode(err)
 		if printLog {
 			LogError(r)
 		}

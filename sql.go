@@ -37,8 +37,8 @@ func SQLOpen() {
 	db.AddQueryHook(dbLogger{})
 }
 
-// SQLClose - disconnect sql
-func SQLClose() {
+// sqlClose - disconnect sql
+func sqlClose() {
 	if db == nil {
 		return
 	}

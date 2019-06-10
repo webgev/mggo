@@ -8,8 +8,6 @@ import (
 
 var (
 	config   *ini.File
-	respose  http.ResponseWriter
-	request  http.Request
 	initFlag bool
 )
 
@@ -19,15 +17,12 @@ var callbacks []callbackHandler
 
 // startServer is start server
 func startServer(w http.ResponseWriter, req *http.Request) {
-	respose = w
-	request = *req
 	SQLOpen()
 }
 
 // endServer is stop server and handler error
-func endServer(temp ViewData) {
-	SQLClose()
-	handlerError(temp, recover())
+func endServer(ctx *BaseContext, temp ViewData) {
+	handlerError(ctx, temp, recover())
 }
 
 // InitCallback registers a callback function that will be called when the configuration is initialized.
@@ -51,6 +46,5 @@ func Run(rout Router, cfg *ini.File) {
 	for _, handler := range callbacks {
 		handler()
 	}
-	SQLClose()
 	rout.run()
 }

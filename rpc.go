@@ -41,8 +41,7 @@ type RPCInvoke int
 func (r *RPCInvoke) Invoke(args *RPCArgs, reply *[]byte) error {
 	SQLOpen()
 	defer func() {
-		SQLClose()
-		handlerError(ViewData{}, recover())
+		//handlerError(ViewData{}, recover())
 	}()
 	methods := strings.Split(args.Method, ".")
 	contr := getController(methods[0])
@@ -55,8 +54,6 @@ func (r *RPCInvoke) Invoke(args *RPCArgs, reply *[]byte) error {
 	if !method.IsValid() {
 		panic(ErrorMethodNotFound{})
 	}
-	LogInfo("Call rpc method", "->", methods)
-	LogInfo("Cookie", GetCookie("sid"))
 	res := method.Call(nil)
 	LogInfo("End call rpc method", "->", methods)
 	if len(res) > 0 {

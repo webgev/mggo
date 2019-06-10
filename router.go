@@ -60,7 +60,8 @@ func (r *Router) run() {
 	}
 	if add, err := serverConfig.GetKey("socket_address"); err == nil {
 		http.HandleFunc(add.String(), func(w http.ResponseWriter, req *http.Request) {
-			socketConnect(r.getUserInfo().ID, w, req)
+			ctx := &BaseContext{w, req}
+			socketConnect(r.getUserInfo(ctx).ID, w, req)
 		})
 	}
 	if static, err := serverConfig.GetKey("static_address"); err == nil {
@@ -91,8 +92,9 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
 		panic(ErrorStatusForbidden{})
 	}
+	ctx := &BaseContext{w, req}
 	startServer(w, req)
-	defer endServer(r.ViewData)
+	defer endServer(ctx, r.ViewData)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -100,7 +102,7 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 
 	r.parseBody(req, &rec)
 
-	user := r.getUserInfo()
+	user := r.getUserInfo(ctx)
 	if !CheckRight(rec.Method, user.Right, true) {
 		panic(ErrorStatusForbidden{})
 	}
@@ -112,9 +114,8 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	if contr == nil {
 		panic(ErrorMethodNotFound{})
 	}
-
 	MapToStruct(rec.Params, contr)
-	res := Invoke(contr, methods[1])
+	res := Invoke(ctx, contr, methods[1])
 	var result interface{}
 
 	LogInfo("Конец API метода:", rec.Method)
@@ -127,9 +128,9 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) view(w http.ResponseWriter, req *http.Request) {
+	ctx := &BaseContext{w, req}
 	startServer(w, req)
-	defer endServer(r.ViewData)
-
+	defer endServer(ctx, r.ViewData)
 	path := strings.Split(req.URL.Path[1:], "/")
 	if path[0] == "" {
 		path[0] = "home"
@@ -145,7 +146,7 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 	if path[1] == "" {
 		path[1] = "index"
 	}
-	user := r.getUserInfo()
+	user := r.getUserInfo(ctx)
 	if !CheckViewRight(strings.Title(rout), strings.Title(path[1]), user.Right, false) {
 		panic(ErrorViewNotFound{})
 	}
@@ -165,6 +166,7 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 		panic(ErrorViewNotFound{})
 	}
 	inputs := []reflect.Value{
+		reflect.ValueOf(ctx),
 		reflect.ValueOf(&r.ViewData),
 		reflect.ValueOf(path),
 	}
@@ -221,9 +223,9 @@ func (r *Router) defaultParams() {
 	}
 }
 
-func (r *Router) getUserInfo() User {
+func (r *Router) getUserInfo(ctx *BaseContext) User {
 	u := User{}
-	return u.GetCurrentUserInfo()
+	return u.GetCurrentUserInfo(ctx)
 }
 
 type tempalteParser struct {

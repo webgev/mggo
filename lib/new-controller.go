@@ -24,7 +24,7 @@ func init() {
     mggo.AppendRight("$NAME.Delete", mggo.RRightEditor)
 
     mggo.AppendViewRight("$NAME.Update", mggo.RRightEditor)
-    mggo.InitCallaback(func () {
+    mggo.InitCallback(func () {
         mggo.CreateTable( []interface{}{ (*$NAME)(nil) } )
     })
 }

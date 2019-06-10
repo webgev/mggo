@@ -2,14 +2,14 @@ package mggo
 
 import "net/http"
 
-// SetCookie - set coolie in response
-func SetCookie(c *http.Cookie) {
-	http.SetCookie(respose, c)
+// SetCookie - set coolikie in response
+func SetCookie(ctx *BaseContext, c *http.Cookie) {
+	http.SetCookie(ctx.Response, c)
 }
 
 // GetCookie - set coolie in request
-func GetCookie(name string) string {
-	var cookie, err = request.Cookie(name)
+func GetCookie(ctx *BaseContext, name string) string {
+	var cookie, err = ctx.Request.Cookie(name)
 	if err != nil {
 		return ""
 	}
