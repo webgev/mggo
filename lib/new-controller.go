@@ -35,12 +35,12 @@ type $NAME struct {
     mggo.ListFilter ` + "`sql:\"-\" structtomap:\"-\" mapstructure:\",squash\"`" + `
 }
 
-func(c $NAME) Read() $NAME {
+func(c $NAME) Read(ctx *mggo.BaseContext) $NAME {
     mggo.SQL().Select(&c)
     return c
 }
 
-func (c *$NAME) List() ($NAMELOWERs []$NAME) {
+func (c *$NAME) List(ctx *mggo.BaseContext) ($NAMELOWERs []$NAME) {
     query := mggo.SQL().Model(&$NAMELOWERs)
     for key, value := range c.Filter {
         switch key {
@@ -51,7 +51,8 @@ func (c *$NAME) List() ($NAMELOWERs []$NAME) {
     c.ListFilter.Paging(query).Select()
     return
 }
-func (c $NAME) Update() int {
+
+func (c $NAME) Update(ctx *mggo.BaseContext) int {
     if c.ID == 0 {
         mggo.SQL().Insert(&c)
     } else {
@@ -59,24 +60,24 @@ func (c $NAME) Update() int {
     }
     return c.ID
 }
-func (c $NAME) Delete() {
+
+func (c $NAME) Delete(ctx *mggo.BaseContext) {
     if c.ID != 0 {
         mggo.SQL().Delete(&c)
     }
 }
 
-
-func(c $NAME) IndexView(data *mggo.ViewData, path []string){
+func(c $NAME) IndexView(ctx *mggo.BaseContext, data *mggo.ViewData, path []string){
     data.View = "$NAMELOWER/$NAMELOWER.html"
     data.Data["Title"] = "$NAME"
-    data.Data["$NAMEs"] = c.List()
+    data.Data["$NAMEs"] = c.List(ctx)
 }
-func(v $NAME) ReadView(data *mggo.ViewData, path []string){
+func(v $NAME) ReadView(ctx *mggo.BaseContext, data *mggo.ViewData, path []string){
     if len(path) > 2 {
         if i, err := strconv.Atoi(path[2]); err == nil {
             data.View = "$NAMELOWER/read.html"
             c := $NAME{ID: i}
-            r := c.Read()
+            r := c.Read(ctx)
             if r.ID > 0 {
                 data.Data["Title"] = r.Name
                 data.Data["$NAME"] = r
@@ -86,13 +87,13 @@ func(v $NAME) ReadView(data *mggo.ViewData, path []string){
     }
     panic(mggo.ErrorViewNotFound{})
 }
-func(v $NAME) UpdateView(data *mggo.ViewData, path []string){
+func(v $NAME) UpdateView(ctx *mggo.BaseContext, data *mggo.ViewData, path []string){
     data.View = "news/Update.html"
     if len(path) > 2 {
         if i, err := strconv.Atoi(path[2]); err == nil {
             data.View = "$NAMELOWER/Update.html"
             c := $NAME{ID: i,}
-            r := c.Read()
+            r := c.Read(ctx)
             if r.ID == 0 {
                 panic(mggo.ErrorViewNotFound{})
             }
