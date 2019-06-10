@@ -11,6 +11,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// Controller interface
 type Controller interface{}
 
 // ListFilter is struct for controller list method

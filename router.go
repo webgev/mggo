@@ -3,7 +3,6 @@ package mggo
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"net/http"
 	"reflect"
@@ -90,8 +89,7 @@ func (r *Router) HandleFunc(path string, handler func(http.ResponseWriter, *http
 
 func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
-		fmt.Fprintf(w, "Нельзя")
-		return
+		panic(ErrorStatusForbidden{})
 	}
 	startServer(w, req)
 	defer endServer(r.ViewData)
@@ -157,11 +155,11 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 	if contr == nil {
 		panic(ErrorViewNotFound{})
 	}
-	viewController := reflect.Indirect(reflect.ValueOf(contr)).FieldByName("View")
+	viewController := reflect.Indirect(reflect.ValueOf(contr))
 	if !viewController.IsValid() {
 		panic(ErrorViewNotFound{})
 	}
-	method := viewController.MethodByName(strings.Title(path[1]))
+	method := viewController.MethodByName(strings.Title(path[1]) + "View")
 
 	if !method.IsValid() {
 		panic(ErrorViewNotFound{})

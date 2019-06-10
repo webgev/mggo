@@ -35,7 +35,6 @@ func SQLOpen() {
 		Network:  cs.Key("network").String(),
 	})
 	db.AddQueryHook(dbLogger{})
-	LogInfo("Connect Database")
 }
 
 // SQLClose - disconnect sql
@@ -45,7 +44,6 @@ func SQLClose() {
 	}
 	db.Close()
 	db = nil
-	LogInfo("Disconnect Database")
 }
 
 // SQL is open sql and return pg.DB
