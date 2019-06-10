@@ -11,6 +11,7 @@ Enter Go's path (format varies based on OS):
 Install Mggo Example:
 
 	go get -u github.com/webgev/mggo-example
+	go run ./github.com/webgev/mggo-example/mail.go
 
 Open http://localhost:9000 in your browser and you should see "It works!"
 
