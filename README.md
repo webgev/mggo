@@ -8,14 +8,6 @@ Enter Go's path (format varies based on OS):
 
 	cd $GOPATH
 
-Install Depends:
-
-	go get -u github.com/mitchellh/mapstructure
-	go get -u github.com/go-pg/pg
-	go get -u github.com/gorilla/websocket
-	go get -u github.com/go-ini/ini
-	go get -u github.com/go-redis/redis
-
 Install Mggo Example:
 
 	go get -u github.com/webgev/mggo-example
@@ -51,6 +43,12 @@ func getController(controllerName string) interface{} {
 	
 	return nil
 }
+```
+
+## New controller 
+
+```shell
+go run ..\lib\new-controller.go -name=News
 ```
 
 ## Depends

@@ -1,17 +1,17 @@
-// Create name controller 
+// Create name controller
 
 package main
 
 import (
-    "flag"
-    "strings"
-    "fmt"
-    "os"
-    "path/filepath"
+	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 const (
-    controllerStr = `package controller
+	controllerStr = `package controller
 
 import (
     "github.com/webgev/mggo"
@@ -32,8 +32,7 @@ func init() {
 type $NAME struct {
     ID int
     Name string
-    View $NAMEView ` + "`sql:\"-\" structtomap:\"-\"`" + `
-    mggo.ListFilter ` +"`sql:\"-\" structtomap:\"-\" mapstructure:\",squash\"`" +`
+    mggo.ListFilter ` + "`sql:\"-\" structtomap:\"-\" mapstructure:\",squash\"`" + `
 }
 
 func(c $NAME) Read() $NAME {
@@ -66,15 +65,13 @@ func (c $NAME) Delete() {
     }
 }
 
-type $NAMEView struct{}
 
-func(v $NAMEView) Index(data *mggo.ViewData, path []string){
+func(c $NAME) IndexView(data *mggo.ViewData, path []string){
     data.View = "$NAMELOWER/$NAMELOWER.html"
     data.Data["Title"] = "$NAME"
-    c := $NAME{}
     data.Data["$NAMEs"] = c.List()
 }
-func(v $NAMEView) Read(data *mggo.ViewData, path []string){
+func(v $NAME) ReadView(data *mggo.ViewData, path []string){
     if len(path) > 2 {
         if i, err := strconv.Atoi(path[2]); err == nil {
             data.View = "$NAMELOWER/read.html"
@@ -89,7 +86,7 @@ func(v $NAMEView) Read(data *mggo.ViewData, path []string){
     }
     panic(mggo.ErrorViewNotFound{})
 }
-func(v $NAMEView) Update(data *mggo.ViewData, path []string){
+func(v $NAME) UpdateView(data *mggo.ViewData, path []string){
     data.View = "news/Update.html"
     if len(path) > 2 {
         if i, err := strconv.Atoi(path[2]); err == nil {
@@ -110,7 +107,7 @@ func(v $NAMEView) Update(data *mggo.ViewData, path []string){
     }
 }
 `
-    viewListStr = `{{define "content"}}
+	viewListStr = `{{define "content"}}
 <table class="table table-striped">
     <thead>
         <tr>
@@ -129,14 +126,14 @@ func(v $NAMEView) Update(data *mggo.ViewData, path []string){
 </table>
 {{end}}
 `
-    viewReadStr = `{{define "content"}}
+	viewReadStr = `{{define "content"}}
 <div>
     <p>ID <strong>{{.$NAME.ID}} </strong> </h2>
     <p>Name <strong>{{.$NAME.Name}} </strong> </h2>
 </div>
 {{end}}
 `
-    viewUpdateStr = `{{define "content"}}
+	viewUpdateStr = `{{define "content"}}
 <div id="$NAME-update">
     <input type="text" data-bind="value: Name" placeholder="Name" />
     <input type="submit" title="Go" data-bind="click: clickHandler"/>  
@@ -158,42 +155,42 @@ func(v $NAMEView) Update(data *mggo.ViewData, path []string){
 )
 
 func main() {
-    name := flag.String("name", "", "controller name")
-    //isSql := flag.Bool("sql", true, "is sql")
-    isView := flag.Bool("view", true, "is view")
-    flag.Parse()
+	name := flag.String("name", "", "controller name")
+	//isSql := flag.Bool("sql", true, "is sql")
+	isView := flag.Bool("view", true, "is view")
+	flag.Parse()
 
-    if *name != "" {
-        cName := strings.Title(*name)
-        cNameLower := strings.ToLower(*name)
-        text := strings.ReplaceAll(controllerStr, "$NAMELOWER", cNameLower)
-        text = strings.ReplaceAll(text, "$NAME", cName)
-        file, err := os.Create("./controller/" + cNameLower + ".go")
-        if err != nil{
-            fmt.Println("Unable to create file:", err) 
-            os.Exit(1) 
-        }
-        defer file.Close() 
-        file.WriteString(text)
-        
-        if *isView {
-            newpath := filepath.Join(".", "view", cNameLower)
-            os.MkdirAll(newpath, os.ModePerm)
-            filevList, err := os.Create(newpath + "/" + cNameLower + ".html")
-            filevRead, err2 := os.Create(newpath + "/read.html")
-            filevUpdate, err3 := os.Create(newpath + "/update.html")
-            if err != nil || err2 != nil || err3 != nil{
-                fmt.Println("Unable to create file:", err) 
-                os.Exit(1) 
-            }
-            defer filevList.Close()
-            defer filevRead.Close()
-            defer filevUpdate.Close()
-            filevList.WriteString(strings.ReplaceAll(viewListStr, "$NAME", cName))
-            filevRead.WriteString(strings.ReplaceAll(viewReadStr, "$NAME", cName))
-            filevUpdate.WriteString(strings.ReplaceAll(viewUpdateStr, "$NAME", cName))
-        }
-        
-        fmt.Println("Done.")
-    }
+	if *name != "" {
+		cName := strings.Title(*name)
+		cNameLower := strings.ToLower(*name)
+		text := strings.ReplaceAll(controllerStr, "$NAMELOWER", cNameLower)
+		text = strings.ReplaceAll(text, "$NAME", cName)
+		file, err := os.Create("./controller/" + cNameLower + ".go")
+		if err != nil {
+			fmt.Println("Unable to create file:", err)
+			os.Exit(1)
+		}
+		defer file.Close()
+		file.WriteString(text)
+
+		if *isView {
+			newpath := filepath.Join(".", "view", cNameLower)
+			os.MkdirAll(newpath, os.ModePerm)
+			filevList, err := os.Create(newpath + "/" + cNameLower + ".html")
+			filevRead, err2 := os.Create(newpath + "/read.html")
+			filevUpdate, err3 := os.Create(newpath + "/update.html")
+			if err != nil || err2 != nil || err3 != nil {
+				fmt.Println("Unable to create file:", err)
+				os.Exit(1)
+			}
+			defer filevList.Close()
+			defer filevRead.Close()
+			defer filevUpdate.Close()
+			filevList.WriteString(strings.ReplaceAll(viewListStr, "$NAME", cName))
+			filevRead.WriteString(strings.ReplaceAll(viewReadStr, "$NAME", cName))
+			filevUpdate.WriteString(strings.ReplaceAll(viewUpdateStr, "$NAME", cName))
+		}
+
+		fmt.Println("Done.")
+	}
 }
