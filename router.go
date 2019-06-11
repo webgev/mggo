@@ -55,7 +55,7 @@ func (r *Router) run() {
 	}
 	if add, err := serverConfig.GetKey("socket_address"); err == nil {
 		http.HandleFunc(add.String(), func(w http.ResponseWriter, req *http.Request) {
-			ctx := &BaseContext{w, req}
+			ctx := &BaseContext{w, req, nil}
 			socketConnect(r.getUserInfo(ctx).ID, w, req)
 		})
 	}
@@ -87,7 +87,7 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
 		panic(ErrorStatusForbidden{})
 	}
-	ctx := &BaseContext{w, req}
+	ctx := &BaseContext{w, req, nil}
 	startServer(w, req)
 	defer endServer(ctx, r.ViewData)
 
@@ -123,9 +123,8 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) view(w http.ResponseWriter, req *http.Request) {
-	ctx := &BaseContext{w, req}
 	startServer(w, req)
-	defer endServer(ctx, r.ViewData)
+
 	path := strings.Split(req.URL.Path[1:], "/")
 	if path[0] == "" {
 		path[0] = "home"
@@ -138,9 +137,13 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 	if len(path) == 1 {
 		path = append(path, "index")
 	}
+
 	if path[1] == "" {
 		path[1] = "index"
 	}
+	ctx := &BaseContext{w, req, path}
+	defer endServer(ctx, r.ViewData)
+
 	user := r.getUserInfo(ctx)
 	if !CheckViewRight(strings.Title(rout), strings.Title(path[1]), user.Right, false) {
 		panic(ErrorViewNotFound{})
@@ -163,7 +166,6 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 	inputs := []reflect.Value{
 		reflect.ValueOf(ctx),
 		reflect.ValueOf(&r.ViewData),
-		reflect.ValueOf(path),
 	}
 	method.Call(inputs)
 

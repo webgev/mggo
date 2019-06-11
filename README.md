@@ -18,6 +18,7 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 ## Example
 
 ```go
+import "github.com/webgev/mggo"
 func main() {
     temp := core.ViewData {
         DirView: "./view/",
@@ -26,7 +27,6 @@ func main() {
     }
    
     rout := core.Router{
-        GetController: getController,
         ViewData: temp,
         Menu: getMenu(),
     }
@@ -36,13 +36,44 @@ func main() {
     }
     core.Run(rout, cfg)
 }
-func getController(controllerName string) interface{} {
-	switch strings.ToLower(controllerName) {
-	case "home":
-		return &controller.Home{}
-	}
-	
-	return nil
+```
+
+Controller
+```go
+package controller
+
+import (
+	"strconv"
+
+	"github.com/webgev/mggo"
+)
+func init() {
+	mggo.RegisterController("news", NewNews)
+
+	mggo.AppendRight("News.Read", mggo.RRightGuest)
+
+	mggo.AppendViewRight("News.Update", mggo.RRightEditor)
+	mggo.InitCallback(func() {
+		mggo.CreateTable([]interface{}{(*News)(nil)})
+	})
+}
+func NewNews() *News {
+	return &News{}
+}
+
+type News struct {
+	ID   int
+	Name string
+}
+
+func (c *News) Read(ctx *mggo.BaseContext) News {
+	mggo.SQL().Select(c)
+	return *c
+}
+func (v News) IndexView(ctx *mggo.BaseContext, data *mggo.ViewData) {
+	data.View = "news/news.html"
+	data.Data["Title"] = "News"
+	data.Data["News"] = v.List(ctx)
 }
 ```
 
