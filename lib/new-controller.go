@@ -18,6 +18,8 @@ import (
     "strconv"
 )
 func init() {
+	mggo.RegisterController("$NAMELOWER", New$NAME)
+
     mggo.AppendRight("$NAME.Read", mggo.RRightGuest)
     mggo.AppendRight("$NAME.List", mggo.RRightGuest)
     mggo.AppendRight("$NAME.Update", mggo.RRightEditor)
@@ -27,6 +29,10 @@ func init() {
     mggo.InitCallback(func () {
         mggo.CreateTable( []interface{}{ (*$NAME)(nil) } )
     })
+}
+
+func New$NAME() *$NAME {
+	return $New$NAME{}
 }
 
 type $NAME struct {
@@ -88,10 +94,9 @@ func(v $NAME) ReadView(ctx *mggo.BaseContext, data *mggo.ViewData, path []string
     panic(mggo.ErrorViewNotFound{})
 }
 func(v $NAME) UpdateView(ctx *mggo.BaseContext, data *mggo.ViewData, path []string){
-    data.View = "news/Update.html"
+    data.View = "$NAMELOWER/Update.html"
     if len(path) > 2 {
         if i, err := strconv.Atoi(path[2]); err == nil {
-            data.View = "$NAMELOWER/Update.html"
             c := $NAME{ID: i,}
             r := c.Read(ctx)
             if r.ID == 0 {

@@ -19,8 +19,6 @@ type resultMethod struct {
 	Result interface{}
 }
 
-var getController func(string) interface{}
-
 // RouterHooks is hooks api and view request
 type RouterHooks interface {
 	Before(*Router, http.ResponseWriter, *http.Request)
@@ -31,18 +29,15 @@ type RouterHooks interface {
 // - Host default localhost:9000
 // - ViewData template view
 // - Menu menu for template["Menu"]
-// - GetController function get controller by controller name
 type Router struct {
-	ViewData      ViewData
-	Menu          Menu
-	GetController func(string) interface{}
-	RouterHooks   RouterHooks
+	ViewData    ViewData
+	Menu        Menu
+	RouterHooks RouterHooks
 }
 
 // run http
 func (r *Router) run() {
 	r.defaultParams()
-	getController = r.GetController
 	r.ViewData.Data["tempalteParser"] = tempalteParser{r.ViewData}
 	serverConfig, err := config.GetSection("server")
 	if err != nil {
@@ -109,7 +104,7 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	LogInfo("Вызов API метода:", rec.Method, "с параметрами:", rec.Params)
 
 	methods := strings.Split(rec.Method, ".")
-	contr := r.GetController(methods[0])
+	contr := getController(methods[0])
 
 	if contr == nil {
 		panic(ErrorMethodNotFound{})
@@ -151,7 +146,7 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 		panic(ErrorViewNotFound{})
 	}
 
-	contr := r.GetController(rout)
+	contr := getController(rout)
 
 	if contr == nil {
 		panic(ErrorViewNotFound{})
@@ -215,9 +210,6 @@ func (r *Router) parseBody(req *http.Request, rec *paramsMethod) {
 }
 
 func (r *Router) defaultParams() {
-	if r.GetController == nil {
-		panic("No set function GetController")
-	}
 	if r.ViewData.Template == "" {
 		panic("No set ViewData.Template")
 	}

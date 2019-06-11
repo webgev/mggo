@@ -1,11 +1,13 @@
 package mggo
 
 import (
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/go-pg/pg/orm"
 	"github.com/mitchellh/mapstructure"
@@ -182,4 +184,24 @@ func Invoke(ctx *BaseContext, controller Controller, methodName string) (result 
 	}
 	LogInfo("Конец метода ", objects)
 	return
+}
+
+var controllers = map[string]interface{}{}
+
+func RegisterController(name string, f interface{}) {
+	name = strings.ToLower(name)
+	controllers[name] = f
+}
+
+func getController(name string) interface{} {
+	name = strings.ToLower(name)
+	fmt.Println(name, controllers)
+	if f, ok := controllers[name]; ok {
+		fun := reflect.ValueOf(f)
+		res := fun.Call(nil)
+		if len(res) > 0 {
+			return res[0].Interface()
+		}
+	}
+	return nil
 }
