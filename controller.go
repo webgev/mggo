@@ -1,7 +1,6 @@
 package mggo
 
 import (
-	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -195,7 +194,6 @@ func RegisterController(name string, f interface{}) {
 
 func getController(name string) interface{} {
 	name = strings.ToLower(name)
-	fmt.Println(name, controllers)
 	if f, ok := controllers[name]; ok {
 		fun := reflect.ValueOf(f)
 		res := fun.Call(nil)
