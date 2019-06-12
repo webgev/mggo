@@ -183,6 +183,11 @@ func InvokeView(ctx *BaseContext, controllerName, page string, data *ViewData) {
 	method := viewController.MethodByName(strings.Title(page) + "View")
 
 	if !method.IsValid() {
+		fmt.Println(1)
+		method = viewController.MethodByName("View")
+	}
+	if !method.IsValid() {
+		fmt.Println(2)
 		panic(ErrorViewNotFound{})
 	}
 	inputs := []reflect.Value{

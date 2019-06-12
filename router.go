@@ -41,7 +41,6 @@ type Router struct {
 // run http
 func (r *Router) run() {
 	r.defaultParams()
-	r.ViewData.Data["tempalteParser"] = tempalteParser{r.ViewData}
 	serverConfig, err := config.GetSection("server")
 	if err != nil {
 		panic(err)
@@ -115,6 +114,8 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 
 func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 	startServer(w, req)
+	r.ViewData.Data = map[string]interface{}{}
+	r.ViewData.Data["tempalteParser"] = tempalteParser{r.ViewData}
 
 	path := strings.Split(req.URL.Path[1:], "/")
 	if path[0] == "" {
@@ -132,7 +133,7 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 		path[1] = "index"
 	}
 
-	ctx := newBaseContext(w, req, nil, User{})
+	ctx := newBaseContext(w, req, path, User{})
 	defer endServer(ctx, r.ViewData)
 
 	user := r.getUserInfo(ctx)
