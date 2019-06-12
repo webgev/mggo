@@ -1,4 +1,4 @@
-# Web Framework Application
+# MgGo - Web Framework
 
 Controller - api and view methods
 
