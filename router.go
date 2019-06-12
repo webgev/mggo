@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
-	"reflect"
 	"strings"
 )
 
 var customHandles map[string]func(http.ResponseWriter, *http.Request)
 
-type paramsMethod struct {
+// ParamsMethod is for api method
+// Method is method name. Eq News.Read
+// Params is map params for method.
+// Parameters are passed to the structure of the method through the MapToString function.
+type ParamsMethod struct {
 	Params map[string]interface{}
 	Method string
 }
@@ -55,7 +58,7 @@ func (r *Router) run() {
 	}
 	if add, err := serverConfig.GetKey("socket_address"); err == nil {
 		http.HandleFunc(add.String(), func(w http.ResponseWriter, req *http.Request) {
-			ctx := &BaseContext{w, req, nil}
+			ctx := newBaseContext(w, req, nil, User{})
 			socketConnect(r.getUserInfo(ctx).ID, w, req)
 		})
 	}
@@ -87,14 +90,13 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
 		panic(ErrorStatusForbidden{})
 	}
-	ctx := &BaseContext{w, req, nil}
+	ctx := newBaseContext(w, req, nil, User{})
 	startServer(w, req)
 	defer endServer(ctx, r.ViewData)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	var rec paramsMethod
-
+	var rec ParamsMethod
 	r.parseBody(req, &rec)
 
 	user := r.getUserInfo(ctx)
@@ -103,20 +105,14 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	}
 	LogInfo("Вызов API метода:", rec.Method, "с параметрами:", rec.Params)
 
-	methods := strings.Split(rec.Method, ".")
-	contr := getController(methods[0])
-
-	if contr == nil {
-		panic(ErrorMethodNotFound{})
-	}
-	MapToStruct(rec.Params, contr)
-	res := Invoke(ctx, contr, methods[1])
-	var result interface{}
+	result := InvokeAPI(ctx, &rec)
 
 	LogInfo("Конец API метода:", rec.Method)
-	if res != nil {
-		result = GetAPIResult(res)
+
+	if result != nil {
+		result = GetAPIResult(result)
 	}
+
 	r.hooksBefore(w, req)
 	json.NewEncoder(w).Encode(resultMethod{Result: result})
 	r.hooksAfter(w, req)
@@ -137,37 +133,18 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 	if len(path) == 1 {
 		path = append(path, "index")
 	}
-
 	if path[1] == "" {
 		path[1] = "index"
 	}
-	ctx := &BaseContext{w, req, path}
+
+	ctx := newBaseContext(w, req, nil, User{})
 	defer endServer(ctx, r.ViewData)
 
 	user := r.getUserInfo(ctx)
 	if !CheckViewRight(strings.Title(rout), strings.Title(path[1]), user.Right, false) {
 		panic(ErrorViewNotFound{})
 	}
-
-	contr := getController(rout)
-
-	if contr == nil {
-		panic(ErrorViewNotFound{})
-	}
-	viewController := reflect.Indirect(reflect.ValueOf(contr))
-	if !viewController.IsValid() {
-		panic(ErrorViewNotFound{})
-	}
-	method := viewController.MethodByName(strings.Title(path[1]) + "View")
-
-	if !method.IsValid() {
-		panic(ErrorViewNotFound{})
-	}
-	inputs := []reflect.Value{
-		reflect.ValueOf(ctx),
-		reflect.ValueOf(&r.ViewData),
-	}
-	method.Call(inputs)
+	InvokeView(ctx, rout, path[1], &r.ViewData)
 
 	view := r.ViewData.DirView + r.ViewData.View
 	t, err := template.ParseFiles(r.ViewData.DirView+r.ViewData.Template, view)
@@ -194,7 +171,7 @@ func (r *Router) hooksAfter(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (r *Router) parseBody(req *http.Request, rec *paramsMethod) {
+func (r *Router) parseBody(req *http.Request, rec *ParamsMethod) {
 	if strings.HasPrefix(req.Header.Get("Content-Type"), "application/json") {
 		_ = json.NewDecoder(req.Body).Decode(&rec)
 	} else if strings.HasPrefix(req.Header.Get("Content-Type"), "multipart/form-data") {

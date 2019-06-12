@@ -15,6 +15,8 @@ import (
 // Controller interface
 type Controller interface{}
 
+var controllers = map[string]interface{}{}
+
 // ListFilter is struct for controller list method
 type ListFilter struct {
 	Filter MapStringAny `sql:"-" structtomap:"-" mapstructure:"filter"`
@@ -43,6 +45,12 @@ type ViewData struct {
 	Template string
 	View     string
 	Data     map[string]interface{}
+}
+
+//RegisterController is register controller
+func RegisterController(name string, f interface{}) {
+	name = strings.ToLower(name)
+	controllers[name] = f
 }
 
 // MapToStruct decode map to struct
@@ -145,6 +153,41 @@ func GetAPIResult(params interface{}) interface{} {
 	return result
 }
 
+// InvokeAPI is invoke controller api method
+func InvokeAPI(ctx *BaseContext, rec *ParamsMethod) (result interface{}) {
+	methods := strings.Split(rec.Method, ".")
+	contr := getController(methods[0])
+
+	if contr == nil {
+		panic(ErrorMethodNotFound{})
+	}
+	MapToStruct(rec.Params, contr)
+	res := Invoke(ctx, contr, methods[1])
+	return res
+}
+
+func InvokeView(ctx *BaseContext, controllerName, page string, data *ViewData) {
+	contr := getController(controllerName)
+
+	if contr == nil {
+		panic(ErrorViewNotFound{})
+	}
+	viewController := reflect.Indirect(reflect.ValueOf(contr))
+	if !viewController.IsValid() {
+		panic(ErrorViewNotFound{})
+	}
+	method := viewController.MethodByName(strings.Title(page) + "View")
+
+	if !method.IsValid() {
+		panic(ErrorViewNotFound{})
+	}
+	inputs := []reflect.Value{
+		reflect.ValueOf(ctx),
+		reflect.ValueOf(data),
+	}
+	method.Call(inputs)
+}
+
 // Invoke controller method
 func Invoke(ctx *BaseContext, controller Controller, methodName string) (result interface{}) {
 	c := reflect.ValueOf(controller)
@@ -183,13 +226,6 @@ func Invoke(ctx *BaseContext, controller Controller, methodName string) (result 
 	}
 	LogInfo("Конец метода ", objects)
 	return
-}
-
-var controllers = map[string]interface{}{}
-
-func RegisterController(name string, f interface{}) {
-	name = strings.ToLower(name)
-	controllers[name] = f
 }
 
 func getController(name string) interface{} {
