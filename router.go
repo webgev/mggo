@@ -86,12 +86,12 @@ func (r *Router) HandleFunc(path string, handler func(http.ResponseWriter, *http
 }
 
 func (r *Router) api(w http.ResponseWriter, req *http.Request) {
-	if req.Method != "POST" {
-		panic(ErrorStatusForbidden{})
-	}
 	ctx := newBaseContext(w, req, nil, req.URL.Query(), User{})
 	startServer(w, req)
 	defer endServer(ctx, r.ViewData)
+	if req.Method != "POST" {
+		panic(ErrorViewNotFound{})
+	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
