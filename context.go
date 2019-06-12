@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 // BaseContext is call context
@@ -11,12 +12,13 @@ type BaseContext struct {
 	Response    http.ResponseWriter
 	Request     *http.Request
 	Path        []string
+	Query       url.Values
 	CurrentUser User
 	uuid        string
 }
 
-func newBaseContext(response http.ResponseWriter, request *http.Request, path []string, user User) *BaseContext {
-	return &BaseContext{response, request, path, user, generateUIIDMethod()}
+func newBaseContext(response http.ResponseWriter, request *http.Request, path []string, query url.Values, user User) *BaseContext {
+	return &BaseContext{response, request, path, query, user, generateUIIDMethod()}
 }
 
 func generateUIIDMethod() string {

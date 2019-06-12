@@ -57,7 +57,7 @@ func (r *Router) run() {
 	}
 	if add, err := serverConfig.GetKey("socket_address"); err == nil {
 		http.HandleFunc(add.String(), func(w http.ResponseWriter, req *http.Request) {
-			ctx := newBaseContext(w, req, nil, User{})
+			ctx := newBaseContext(w, req, nil, req.URL.Query(), User{})
 			socketConnect(r.getUserInfo(ctx).ID, w, req)
 		})
 	}
@@ -89,7 +89,7 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
 		panic(ErrorStatusForbidden{})
 	}
-	ctx := newBaseContext(w, req, nil, User{})
+	ctx := newBaseContext(w, req, nil, req.URL.Query(), User{})
 	startServer(w, req)
 	defer endServer(ctx, r.ViewData)
 
@@ -133,7 +133,7 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 		path[1] = "index"
 	}
 
-	ctx := newBaseContext(w, req, path, User{})
+	ctx := newBaseContext(w, req, path, req.URL.Query(), User{})
 	defer endServer(ctx, r.ViewData)
 
 	user := r.getUserInfo(ctx)
