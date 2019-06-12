@@ -17,7 +17,7 @@ func (d dbLogger) BeforeQuery(c context.Context, q *pg.QueryEvent) (context.Cont
 
 func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) (context.Context, error) {
 	s, _ := q.FormattedQuery()
-	LogInfo("Вызов sql:\n", s)
+	LogInfo(nil, "Вызов sql:\n", s)
 	return c, nil
 }
 
@@ -66,7 +66,7 @@ func CreateTable(models []interface{}) {
 			IfNotExists: true,
 		})
 		if err != nil {
-			LogInfo(err)
+			LogInfo(nil, err)
 		}
 	}
 }

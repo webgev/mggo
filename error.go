@@ -76,7 +76,7 @@ func handlerError(ctx *BaseContext, temp ViewData, r interface{}) {
 
 		json.NewEncoder(ctx.Response).Encode(err)
 		if printLog {
-			LogError(r)
+			LogError(ctx, r)
 		}
 	}
 }

@@ -1,10 +1,12 @@
 package mggo
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 )
 
 var logInfo *log.Logger
@@ -27,14 +29,24 @@ func init() {
 }
 
 // LogInfo - send message in loginfo.log
-func LogInfo(values ...interface{}) {
+func LogInfo(ctx *BaseContext, values ...interface{}) {
 	go func() {
+		var uuid string
+		if ctx != nil {
+			uuid = ctx.uuid
+		}
+		logInfo.SetPrefix(time.Now().Format("2006-01-02 15:04:05.000000") + fmt.Sprintf(" [%v] ", uuid))
 		logInfo.Println(values...)
 	}()
 }
 
 // LogError - send message error in logerror.log
-func LogError(values ...interface{}) {
+func LogError(ctx *BaseContext, values ...interface{}) {
+	var uuid string
+	if ctx != nil {
+		uuid = ctx.uuid
+	}
+	logError.SetPrefix(time.Now().Format("2006-01-02 15:04:05.000000") + fmt.Sprintf(" [%v] ", uuid))
 	logError.Println("Unrecovered Error:")
 	logError.Println(values...)
 	logError.Println("Stack Trace:")

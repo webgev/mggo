@@ -1,6 +1,7 @@
 package mggo
 
 import (
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -162,10 +163,13 @@ func InvokeAPI(ctx *BaseContext, rec *ParamsMethod) (result interface{}) {
 		panic(ErrorMethodNotFound{})
 	}
 	MapToStruct(rec.Params, contr)
-	res := Invoke(ctx, contr, methods[1])
+	LogInfo(ctx, "Вызов API метода:", rec.Method, "с параметрами:", rec.Params)
+	res := invoke(ctx, contr, methods[1])
+	LogInfo(ctx, "Конец API метода:", rec.Method)
 	return res
 }
 
+// InvokeView is invoke controller view method
 func InvokeView(ctx *BaseContext, controllerName, page string, data *ViewData) {
 	contr := getController(controllerName)
 
@@ -190,21 +194,21 @@ func InvokeView(ctx *BaseContext, controllerName, page string, data *ViewData) {
 
 // Invoke controller method
 func Invoke(ctx *BaseContext, controller Controller, methodName string) (result interface{}) {
+	objects := fmt.Sprintf("%T.%v", controller, methodName)
+	LogInfo(ctx, "Вызов метода", objects, "c параметрами", fmt.Sprintf("%#v", controller))
+	res := invoke(ctx, controller, methodName)
+	LogInfo(ctx, "Конец метода ", objects)
+	return res
+}
+
+func invoke(ctx *BaseContext, controller Controller, methodName string) (result interface{}) {
 	c := reflect.ValueOf(controller)
-	m := c
-	if c.Type().Kind() == reflect.Ptr {
-		m = reflect.Indirect(c)
-	}
-	name := m.Type().Name()
+	name := strings.SplitN(fmt.Sprintf("%T", controller), ".", 2)[1]
 	objects := name + "." + methodName
 	issetCache := Cache.isset(objects)
-
-	LogInfo("Вызов метода ", objects)
-
 	if issetCache {
 		if v, ok := Cache.getMethod(ctx, objects, controller); ok {
-			LogInfo("Cache get")
-			LogInfo("Конец метода ", objects)
+			LogInfo(ctx, "Cache get")
 			return v
 		}
 	}
@@ -221,10 +225,9 @@ func Invoke(ctx *BaseContext, controller Controller, methodName string) (result 
 		result = res[0].Interface()
 	}
 	if issetCache {
-		LogInfo("Cache set")
+		LogInfo(ctx, "Cache set")
 		Cache.setMethod(ctx, objects, result, controller)
 	}
-	LogInfo("Конец метода ", objects)
 	return
 }
 

@@ -103,12 +103,7 @@ func (r *Router) api(w http.ResponseWriter, req *http.Request) {
 	if !CheckRight(rec.Method, user.Right, true) {
 		panic(ErrorStatusForbidden{})
 	}
-	LogInfo("Вызов API метода:", rec.Method, "с параметрами:", rec.Params)
-
 	result := InvokeAPI(ctx, &rec)
-
-	LogInfo("Конец API метода:", rec.Method)
-
 	if result != nil {
 		result = GetAPIResult(result)
 	}

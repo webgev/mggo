@@ -22,7 +22,7 @@ func runRPC(address string) {
 		if conn, err := listener.Accept(); err != nil {
 			panic(err)
 		} else {
-			LogInfo("new connection established\n")
+			LogInfo(nil, "new connection established\n")
 			go server.ServeCodec(jsonrpc.NewServerCodec(conn))
 		}
 	}
@@ -55,7 +55,7 @@ func (r *RPCInvoke) Invoke(args *RPCArgs, reply *[]byte) error {
 		panic(ErrorMethodNotFound{})
 	}
 	res := method.Call(nil)
-	LogInfo("End call rpc method", "->", methods)
+	LogInfo(nil, "End call rpc method", "->", methods)
 	if len(res) > 0 {
 		r := NewRecord()
 		r.Add("Result", res[0].Interface())
@@ -69,6 +69,7 @@ func (r *RPCInvoke) Invoke(args *RPCArgs, reply *[]byte) error {
 type RPC struct {
 	object  string
 	service string
+	ctx     *BaseContext
 }
 
 // Invoke rpc method
@@ -100,10 +101,11 @@ func (r *RPC) Invoke(method string, params *Record) (interface{}, error) {
 }
 
 // NewRPC is new RPC
-func NewRPC(object, service string) *RPC {
+func NewRPC(ctx *BaseContext, object, service string) *RPC {
 	r := &RPC{
 		object:  object,
 		service: service,
+		ctx:     ctx,
 	}
 	return r
 }
