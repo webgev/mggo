@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var sockets map[int][]*websocket.Conn = map[int][]*websocket.Conn{}
+var sockets = map[int][]*websocket.Conn{}
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
