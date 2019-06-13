@@ -49,7 +49,7 @@ import (
 )
 func init() {
 	// регистрируем контроллер
-	mggo.RegisterController("news", News)
+	mggo.RegisterController("news", NewNews)
 
 	// добавляем права на api методы
 	mggo.AppendRight("News.List", mggo.RRightGuest)
@@ -69,7 +69,8 @@ func init() {
 		mggo.Cache.AddMethod("News.List", mggo.CacheTypeMethodParams, 60*60*2)
 	})
 }
-func NewCatalog() *News {
+// Конструктор 
+func NewNews() *News {
 	return &News{}
 }
 // Оснавная структура новостей
@@ -83,6 +84,7 @@ type News struct {
 	Name sting `mapstructure:"name"`
 	mggo.ListFilter `sql:"-" structtomap:"-" mapstructure:",squash"`
 }
+// News.Read
 func (n *News) Read(ctx *mggo.BaseContext) News {
 	if n.ID != 0 {
 		return News{}
@@ -90,6 +92,7 @@ func (n *News) Read(ctx *mggo.BaseContext) News {
 	mggo.SQL().Select(n)
 	return *n
 }
+// News.List
 func (n *News) List(ctx *mggo.BaseContext) (newsList []News) {
 	query := mggo.SQL().Model(&newsList)
 	for key, value := range n.Filter {
@@ -101,6 +104,7 @@ func (n *News) List(ctx *mggo.BaseContext) (newsList []News) {
 	n.ListFilter.Paging(query).Select()
 	return
 }
+// News.Update
 func (n *News) Update(ctx *mggo.BaseContext) News {
 	if n.ID == 0 {
 		mggo.SQL().Insert(n)
@@ -109,17 +113,21 @@ func (n *News) Update(ctx *mggo.BaseContext) News {
 	}
 	return *n
 }
+// News.Delete
 func (n *News) Delete(ctx *mggo.BaseContext) {
 	if n.ID != 0 {
 		mggo.SQL().Delete(n)
 	}
 }
+// News.ReadByName
 func (n *News) ReadByName(ctx *mggo.BaseContext) News {
 	if n.Name != "" {
 		mggo.SQL().Model(n).Where("name = ?", n.Name).Select()
 	}
 	return *n
 }
+
+// View
 // адрес - /news/
 func (n News) IndexView(ctx *mggo.BaseContext, data *mggo.ViewData) {
 	data.View = "news/news.html"
