@@ -2,6 +2,7 @@ package mggo
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/go-ini/ini"
 )
@@ -35,10 +36,16 @@ func InitCallback(handler callbackHandler) {
 }
 
 //Run http service
-func Run(rout Router, cfg *ini.File) {
+func Run(rout Router, pathConfing string) {
 	if initFlag {
 		panic("init")
 	}
+
+	cfg, err := ini.Load(pathConfing)
+	if err != nil {
+		os.Exit(1)
+	}
+
 	initFlag = true
 	config = cfg
 

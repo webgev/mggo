@@ -18,8 +18,19 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 ## Example
 
 ```go
-import "github.com/webgev/mggo"
+package main
+
+import (
+	"github.com/webgev/mggo"
+	_ "./controller" // контроллеры
+)
+
+
 func main() {
+	// конфигурируем view шаблон
+	// DirView - папка, в которой находятся все шаблоны контроллеров
+	// Template - основной шаблон 
+	// Data - параметры
 	temp := mggo.ViewData{
 		DirView:  "./view/",
 		Template: "_template.html",
@@ -28,14 +39,37 @@ func main() {
 
 	rout := mggo.Router{
 		ViewData:    temp,
-		RouterHooks: hooks{},
 	}
-	cfg, err := ini.Load("./config.ini")
-	if err != nil {
-		os.Exit(1)
-	}
-	mggo.Run(rout, cfg)
+
+	mggo.Run(rout, "./config.ini")
 }
+```
+
+config.ini
+```ini
+[server]
+http_host = localhost:9000
+view_address = /
+api_address = /api/
+socket_address = /echo
+static_address = /static/
+rpc_address = localhost:9001
+
+[database]
+user     = postgres
+password = postgres
+database = Go
+address  = 127.0.0.1:5432
+network  = tcp
+
+[smtp]
+email = *****@gmail.com
+password = *****
+server = smtp.gmail.com
+port = 587
+
+[redis]
+address = localhost:6379
 ```
 
 ## Controller
