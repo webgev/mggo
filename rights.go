@@ -9,7 +9,9 @@ const (
 	RRightAdmin   = 32
 )
 
+//Rights is map where key is right name and value is right int
 var Rights = map[string]int{}
+
 var rights = map[string]int{}
 var rightsView = map[string]int{}
 

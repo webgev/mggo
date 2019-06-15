@@ -63,6 +63,7 @@ func (s SAP) SessionUserID(ctx *BaseContext) int {
 	return int(id)
 }
 
+// Update session
 func (s SAP) Update(ctx *BaseContext) {
 	sid := s.SessionID(ctx)
 	if sid == "" {
