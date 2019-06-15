@@ -151,6 +151,7 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 	r.ViewData.Data["UserInfo"] = user
 	r.Menu.SetActivePage(rout)
 	r.ViewData.Data["Menu"] = r.Menu.items
+	r.ViewData.Data["Rights"] = Rights
 
 	r.hooksBefore(w, req)
 	t.Execute(w, r.ViewData.Data)

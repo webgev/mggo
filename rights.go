@@ -9,12 +9,16 @@ const (
 	RRightAdmin   = 32
 )
 
-var rights map[string]int
-var rightsView map[string]int
+var Rights = map[string]int{}
+var rights = map[string]int{}
+var rightsView = map[string]int{}
 
 func init() {
-	rights = map[string]int{}
-	rightsView = map[string]int{}
+	Rights["Guest"] = RRightGuest
+	Rights["User"] = RRightUser
+	Rights["Editor"] = RRightEditor
+	Rights["Manager"] = RRightManager
+	Rights["Admin"] = RRightAdmin
 }
 
 // AppendRight registration rigth
