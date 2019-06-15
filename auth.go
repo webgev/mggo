@@ -10,6 +10,14 @@ import (
 // SAP contoller for auth
 type SAP struct{}
 
+func (s SAP) setSid(ctx *BaseContext, sid string) {
+	expiration := time.Now().Add(10 * 365 * 24 * time.Hour)
+	cookie1 := &http.Cookie{Name: "sid", Value: sid, HttpOnly: true, Expires: expiration, Path: "/"}
+	SetCookie(ctx, cookie1)
+	session := SessionStorage{Sid: sid, Expire: 24 * 30 * time.Hour}
+	session.Set()
+}
+
 // Authenticate by login and password
 func (s SAP) Authenticate(ctx *BaseContext, login, password string) bool {
 	if login != "" && password != "" {
@@ -18,12 +26,8 @@ func (s SAP) Authenticate(ctx *BaseContext, login, password string) bool {
 		if id == 0 {
 			return false
 		}
-		expiration := time.Now().Add(365 * 24 * time.Hour)
 		sid := GenerateSid(id)
-		cookie1 := &http.Cookie{Name: "sid", Value: sid, HttpOnly: true, Expires: expiration, Path: "/"}
-		SetCookie(ctx, cookie1)
-		session := SessionStorage{Sid: sid}
-		session.Set()
+		s.setSid(ctx, sid)
 		EventPublish("SAP.Auth", EventTypeServer, nil, id)
 		return true
 	}
@@ -32,13 +36,15 @@ func (s SAP) Authenticate(ctx *BaseContext, login, password string) bool {
 
 // IsAuth is check user authenticate
 func (s SAP) IsAuth(ctx *BaseContext) bool {
-	return GetCookie(ctx, "sid") != ""
+	session := SessionStorage{Sid: s.SessionID(ctx)}
+	_, err := session.Isset()
+	return err == nil
 }
 
 // Exit is exit
 func (s SAP) Exit(ctx *BaseContext) {
 	expiration := time.Now().Add(-300)
-	sid := GetCookie(ctx, "sid")
+	sid := s.SessionID(ctx)
 	cookie1 := &http.Cookie{Name: "sid", Value: sid, HttpOnly: true, Expires: expiration, Path: "/"}
 	SetCookie(ctx, cookie1)
 	session := SessionStorage{Sid: sid}
@@ -47,13 +53,22 @@ func (s SAP) Exit(ctx *BaseContext) {
 
 // SessionUserID - get userid for cookie sid
 func (s SAP) SessionUserID(ctx *BaseContext) int {
-	sid := GetCookie(ctx, "sid")
-	if sid == "" {
+	if s.IsAuth(ctx) == false {
 		return 0
 	}
+	sid := s.SessionID(ctx)
 	arr := strings.Split(sid, "-")
-	id, _ := strconv.Atoi(arr[0])
-	return id
+	id, _ := strconv.ParseUint(arr[0], 16, 64)
+
+	return int(id)
+}
+
+func (s SAP) Update(ctx *BaseContext) {
+	sid := s.SessionID(ctx)
+	if sid == "" {
+		return
+	}
+	s.setSid(ctx, sid)
 }
 
 // SessionID - get userid for cookie sid

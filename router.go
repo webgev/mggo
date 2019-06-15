@@ -135,6 +135,7 @@ func (r *Router) view(w http.ResponseWriter, req *http.Request) {
 
 	ctx := newBaseContext(w, req, path, req.URL.Query(), User{})
 	defer endServer(ctx, r.ViewData)
+	go SAP{}.Update(ctx)
 
 	user := r.getUserInfo(ctx)
 	if !CheckViewRight(strings.Title(rout), strings.Title(path[1]), user.Right, false) {

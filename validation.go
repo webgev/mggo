@@ -36,8 +36,8 @@ func (v *Validation) Create() string {
 	if v.Type == ValidationEmailType {
 		v.sendEmailMessage()
 	}
-	redicClient.Set(v.Token, string(v.Code), 0)
-	redicClient.Expire(v.Token, 10*time.Minute)
+	redisClient.Set(v.Token, string(v.Code), 0)
+	redisClient.Expire(v.Token, 10*time.Minute)
 	return v.Token
 }
 
@@ -46,13 +46,13 @@ func (v *Validation) Verification() bool {
 	if v.Token == "" || v.Code == 0 {
 		return false
 	}
-	val, err := redicClient.Get(v.Token).Result()
+	val, err := redisClient.Get(v.Token).Result()
 	if err != nil {
 		panic(err)
 	}
 	result := val == string(v.Code)
 	if result {
-		redicClient.Del(v.Token)
+		redisClient.Del(v.Token)
 	}
 	return result
 }
