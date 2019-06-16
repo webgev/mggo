@@ -28,7 +28,7 @@ func (s SAP) Authenticate(ctx *BaseContext, login, password string) bool {
 		}
 		sid := GenerateSid(id)
 		s.setSid(ctx, sid)
-		EventPublish("SAP.Auth", EventTypeServer, nil, id)
+		EventPublish("SAP.Auth", EventTypeServer, nil, MapStringAny{"id": id})
 		return true
 	}
 	return false

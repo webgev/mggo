@@ -32,7 +32,7 @@ func init() {
 }
 
 func New$NAME() *$NAME {
-	return $New$NAME{}
+	return &$NAME{}
 }
 
 type $NAME struct {

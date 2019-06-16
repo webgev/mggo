@@ -1,8 +1,6 @@
 package mggo
 
 import (
-	"net/http"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -12,49 +10,59 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-type socketData struct {
-	EventName string      `json:"event_name"`
-	Msg       interface{} `json:"msg"`
+type SocketData struct {
+	EventName string       `json:"event_name"`
+	Msg       MapStringAny `json:"msg"`
 }
 
-func socketConnect(userID int, w http.ResponseWriter, r *http.Request) {
+// подключаемся к сокету. нужен пользователь
+func socketConnect(ctx *BaseContext, userID int) {
 	if userID == 0 {
 		return
 	}
 
-	conn, _ := upgrader.Upgrade(w, r, nil)
+	conn, _ := upgrader.Upgrade(ctx.Response, ctx.Request, nil)
 	conns := sockets[userID]
 	conns = append(conns, conn)
 	sockets[userID] = conns
+	go func() {
+		s := &SocketData{
+			EventName: "Socket.Connect",
+			Msg: MapStringAny{
+				"addr": conn.RemoteAddr().String(),
+			},
+		}
+		SendSocket(s, conn)
+	}()
 }
 
-// sendSocketUser is will send the user a message through the socket
-func sendSocketUser(s *socketData, userID int, msg interface{}) {
+// SendSocketUser is will send the user a message through the socket
+func SendSocketUser(s *SocketData, userID int) {
 	if conns, ok := sockets[userID]; ok {
 		for _, conn := range conns {
-			sendSocket(s, conn, msg)
+			SendSocket(s, conn)
 		}
 	}
 }
 
-func sendSocket(s *socketData, conn *websocket.Conn, msg interface{}) {
+func SendSocket(s *SocketData, conn *websocket.Conn) {
 	conn.WriteJSON(s)
 }
 
-func sendSockets(eventName string, users []int, msg interface{}) {
-	s := &socketData{
+func sendSockets(eventName string, users []int, msg MapStringAny) {
+	s := &SocketData{
 		EventName: eventName,
 		Msg:       msg,
 	}
 	if len(users) == 0 {
 		for _, conns := range sockets {
 			for _, conn := range conns {
-				sendSocket(s, conn, msg)
+				SendSocket(s, conn)
 			}
 		}
 	} else {
 		for _, user := range users {
-			sendSocketUser(s, user, msg)
+			SendSocketUser(s, user)
 		}
 	}
 }

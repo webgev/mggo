@@ -30,11 +30,11 @@ func EventSubscribe(eventName string, handler eventHadler) {
 }
 
 // EventPublish is publick
-func EventPublish(eventName string, et eventType, users []int, params ...interface{}) {
+func EventPublish(eventName string, et eventType, users []int, params MapStringAny) {
 	// send server
-	if v, ok := events[eventName]; ok {
-		for _, handler := range v {
-			if et > EventTypeClient {
+	if et > EventTypeClient {
+		if v, ok := events[eventName]; ok {
+			for _, handler := range v {
 				handler(params)
 			}
 		}

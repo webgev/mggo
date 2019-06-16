@@ -1,6 +1,7 @@
 package mggo
 
 import (
+	"math/rand"
 	"net/http"
 	"os"
 
@@ -54,4 +55,14 @@ func Run(rout Router, pathConfing string) {
 		handler()
 	}
 	rout.run()
+}
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func RandStringBytes(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }

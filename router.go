@@ -58,7 +58,7 @@ func (r *Router) run() {
 	if add, err := serverConfig.GetKey("socket_address"); err == nil {
 		http.HandleFunc(add.String(), func(w http.ResponseWriter, req *http.Request) {
 			ctx := newBaseContext(w, req, nil, req.URL.Query(), User{})
-			socketConnect(r.getUserInfo(ctx).ID, w, req)
+			socketConnect(ctx, r.getUserInfo(ctx).ID)
 		})
 	}
 	if static, err := serverConfig.GetKey("static_address"); err == nil {
